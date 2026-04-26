@@ -5,7 +5,8 @@ import { OnlineMonitor } from './pages/OnlineMonitor';
 import { ForensicEventView } from './pages/ForensicEventView';
 import { LOBOverview } from './pages/LOBOverview';
 import { LOBForensic } from './pages/LOBForensic';
-import { LOBLatentSpace } from './pages/LOBLatentSpace';
+import { LOBOrderFlow } from './pages/LOBOrderFlow';
+import { LOBLiveStream } from './pages/LOBLiveStream';
 
 function App() {
   return (
@@ -14,8 +15,9 @@ function App() {
         <Route index element={<OnlineMonitor />} />
         <Route path="forensic" element={<ForensicEventView />} />
         <Route path="lob" element={<LOBOverview />} />
+        <Route path="lob/orderflow" element={<LOBOrderFlow />} />
         <Route path="lob/forensic" element={<LOBForensic />} />
-        <Route path="lob/latent" element={<LOBLatentSpace />} />
+        <Route path="lob/live" element={<LOBLiveStream />} />
       </Route>
     </Routes>
   );

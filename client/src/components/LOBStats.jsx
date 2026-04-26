@@ -5,12 +5,20 @@ import React from 'react';
  * Props: windowDetail (from /api/lob/window/:idx).
  */
 export function LOBStats({ windowDetail }) {
-  if (!windowDetail) {
+  // Defensive: handle null, error responses, and partial/invalid payloads.
+  const valid = windowDetail
+    && !windowDetail.error
+    && Array.isArray(windowDetail.ref_mean)
+    && Array.isArray(windowDetail.test_mean);
+
+  if (!valid) {
     return (
       <div className="glass-panel panel-container">
         <h3 className="panel-title">Regime Verdict</h3>
         <div style={{ color: 'var(--text-secondary)', padding: '1rem 0' }}>
-          Seek the timeline or type an index to compare a reference window against a test window.
+          {windowDetail?.error
+            ? `Could not load window: ${windowDetail.error}`
+            : 'Seek the timeline or type an index to compare a reference window against a test window.'}
         </div>
       </div>
     );

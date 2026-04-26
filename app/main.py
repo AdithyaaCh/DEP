@@ -14,6 +14,7 @@ from src.lob_loader import LOBLoader
 from src.lob_functionalizer import LOBFunctionalizer
 from src.lob_embedder import LOBEmbedder
 from src.lob_detector import LOBDetector
+from src.lob_orderflow import OrderFlowExtractor, fpca_on_orderflow
 from app.simulator import MarketSimulator
 
 app = FastAPI(title="Spectra V7 Dashboard API (SP500 + LOB)")
@@ -696,6 +697,215 @@ def lob_metadata():
         "n_channels": 5,
         "n_label_horizons": 5,
     }
+
+
+# ════════════════════════════════════════════════════════════════
+# Order Flow Endpoints (Cont–Kukanov–Stoikov OFI from snapshot deltas)
+# ════════════════════════════════════════════════════════════════
+
+def _get_orderflow(smooth_sigma: float = 4.0, flow_window: int = 50):
+    """Cached order-flow features for the full dataset."""
+    key = ("orderflow", smooth_sigma, flow_window)
+    if key in _lob_cache:
+        return _lob_cache[key]
+
+    ctx = _get_lob_context()
+    ext = OrderFlowExtractor(smooth_sigma=smooth_sigma, flow_window=flow_window)
+    feats = ext.extract(
+        bid_vol=ctx["bid_vol"],
+        ask_vol=ctx["ask_vol"],
+        bid_price=ctx["bid_price"],
+        ask_price=ctx["ask_price"],
+    )
+    _lob_cache[key] = feats
+    return feats
+
+
+@app.get("/api/lob/orderflow")
+def lob_orderflow(start: int = 0, end: int = -1, stride: int = 1,
+                  smooth_sigma: float = 4.0, flow_window: int = 50):
+    """
+    Per-snapshot order-flow signals: OFI, activity, signed flow,
+    buy/sell intensity, joint feature.
+    """
+    feats = _get_orderflow(smooth_sigma, flow_window)
+    n = feats["ofi"].shape[0]
+    if end < 0 or end > n:
+        end = n
+    start = max(0, start)
+    stride = max(1, stride)
+
+    idx = list(range(start, end, stride))
+    return {
+        "snapshot_indices": idx,
+        "ofi": [_safe_float(v) for v in feats["ofi"][start:end:stride]],
+        "activity": [_safe_float(v) for v in feats["activity"][start:end:stride]],
+        "signed_flow": [_safe_float(v) for v in feats["signed_flow"][start:end:stride]],
+        "buy_intensity": [_safe_float(v) for v in feats["buy_intensity"][start:end:stride]],
+        "sell_intensity": [_safe_float(v) for v in feats["sell_intensity"][start:end:stride]],
+        "joint": [_safe_float(v) for v in feats["joint"][start:end:stride]],
+    }
+
+
+@app.get("/api/lob/orderflow/window")
+def lob_orderflow_window(center: int, halfwindow: int = 100,
+                         smooth_sigma: float = 4.0, flow_window: int = 50):
+    """
+    Centred slice for B-spline / curve visualization, with a smooth
+    reconstruction of each signal over the window.
+    """
+    feats = _get_orderflow(smooth_sigma, flow_window)
+    n = feats["ofi"].shape[0]
+    s = max(0, center - halfwindow)
+    e = min(n, center + halfwindow + 1)
+    if s >= e:
+        return {"error": "empty window"}
+
+    keys = ["ofi", "activity", "signed_flow", "buy_intensity", "sell_intensity", "joint"]
+    out = {"start": int(s), "end": int(e - 1), "center": int(center),
+           "snapshot_indices": list(range(s, e))}
+    for k in keys:
+        seg = feats[k][s:e]
+        out[k] = [_safe_float(v) for v in seg]
+    # Summary stats
+    out["summary"] = {
+        "ofi_mean": _safe_float(np.mean(feats["ofi"][s:e])),
+        "ofi_std": _safe_float(np.std(feats["ofi"][s:e])),
+        "activity_max": _safe_float(np.max(feats["activity"][s:e])),
+        "joint_max": _safe_float(np.max(feats["joint"][s:e])),
+        "signed_flow_end": _safe_float(feats["signed_flow"][e - 1]),
+    }
+    return out
+
+
+@app.get("/api/lob/orderflow/fpca")
+def lob_orderflow_fpca(window_size: int = 200, stride: int = 50,
+                       n_components: int = 3,
+                       smooth_sigma: float = 4.0, flow_window: int = 50):
+    """
+    FPCA on sliding windows of the order-flow signal stack — gives a
+    flow-only latent embedding complementing the depth-based LOBEmbedder.
+    """
+    feats = _get_orderflow(smooth_sigma, flow_window)
+    res = fpca_on_orderflow(feats, window_size=window_size,
+                            stride=stride, n_components=n_components)
+    return {
+        "window_size": int(window_size),
+        "stride": int(stride),
+        "n_components": int(n_components),
+        "snapshot_indices": [int(i) for i in res["indices"]],
+        "latent": [[_safe_float(x) for x in row] for row in res["latent"]],
+        "variance_explained": [_safe_float(v) for v in res["var_exp"]],
+    }
+
+
+# ════════════════════════════════════════════════════════════════
+# Live Streaming WebSocket
+# ════════════════════════════════════════════════════════════════
+
+import asyncio  # noqa: E402
+
+@app.websocket("/ws/lob/stream")
+async def lob_live_stream(websocket: WebSocket, start_idx: int = 300, speed: float = 20.0,
+                          ref_size: int = 300, n_basis: int = 4, n_components: int = 5):
+    """
+    Replays the LOB dataset as a live stream. For each snapshot:
+      - rolling reference Mahalanobis² alarm
+      - current OFI, intensity, imbalance, spread
+      - structured packet for the trading-terminal-style UI
+
+    Speed is snapshots-per-second. The rolling reference statistics are
+    recomputed every ref_size//4 steps for performance.
+    """
+    await websocket.accept()
+    ctx = _get_lob_context()
+    latent_ctx = _get_lob_latent(n_basis, n_components, ref_size)
+    feats = _get_orderflow()
+
+    latent = latent_ctx["latent"]
+    bid_vol = ctx["bid_vol"]; ask_vol = ctx["ask_vol"]
+    bid_price = ctx["bid_price"]; ask_price = ctx["ask_price"]
+    ms = ctx["microstructure"]
+    n = latent.shape[0]
+    p = latent.shape[1]
+
+    L = max(50, int(ref_size))
+    start_idx = max(L, min(n - 1, int(start_idx)))
+    speed = max(1.0, min(200.0, float(speed)))
+    delay = 1.0 / speed
+    refresh_every = max(1, L // 4)
+
+    threshold_99 = float(chi2.ppf(0.99, p))
+    threshold_999 = float(chi2.ppf(0.999, p))
+
+    # Pre-fit rolling reference at start_idx
+    def fit_reference(k):
+        win = latent[k - L:k]
+        mu = win.mean(axis=0)
+        cov = np.cov(win, rowvar=False)
+        if cov.ndim < 2:
+            cov = np.eye(p)
+        cov = cov + 1e-6 * np.eye(p)
+        try:
+            inv = np.linalg.pinv(cov)
+        except Exception:
+            inv = np.eye(p)
+        return mu, inv
+
+    mu_r, inv_r = fit_reference(start_idx)
+
+    try:
+        idx = start_idx
+        while idx < n:
+            if (idx - start_idx) % refresh_every == 0:
+                mu_r, inv_r = fit_reference(idx)
+
+            diff = latent[idx] - mu_r
+            alarm = float(diff @ inv_r @ diff)
+
+            best_bid = float(bid_price[idx, 0])
+            best_ask = float(ask_price[idx, 0])
+            spread = best_ask - best_bid
+
+            severity = "ok"
+            if alarm > threshold_999:
+                severity = "critical"
+            elif alarm > threshold_99:
+                severity = "warning"
+
+            packet = {
+                "type": "tick",
+                "idx": int(idx),
+                "alarm": _safe_float(alarm),
+                "threshold_warn": threshold_99,
+                "threshold_crit": threshold_999,
+                "severity": severity,
+                "best_bid": best_bid,
+                "best_ask": best_ask,
+                "spread": _safe_float(spread),
+                "bid_vol": [_safe_float(v) for v in bid_vol[idx]],
+                "ask_vol": [_safe_float(v) for v in ask_vol[idx]],
+                "bid_price": [_safe_float(v) for v in bid_price[idx]],
+                "ask_price": [_safe_float(v) for v in ask_price[idx]],
+                "ofi": _safe_float(feats["ofi"][idx]),
+                "activity": _safe_float(feats["activity"][idx]),
+                "signed_flow": _safe_float(feats["signed_flow"][idx]),
+                "joint": _safe_float(feats["joint"][idx]),
+                "imbalance": _safe_float(ms["total_imbalance"][idx]),
+                "bid_mass": _safe_float(ms["bid_mass"][idx]),
+                "ask_mass": _safe_float(ms["ask_mass"][idx]),
+                "latent": [_safe_float(x) for x in latent[idx]],
+            }
+            await websocket.send_json(packet)
+            await asyncio.sleep(delay)
+            idx += 1
+    except WebSocketDisconnect:
+        return
+    except Exception as e:
+        try:
+            await websocket.send_json({"type": "error", "message": str(e)})
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":

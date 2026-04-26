@@ -34,16 +34,26 @@ export function LOBOverview() {
   }, [refSize, testSize, minConsec, minMaha]);
 
   useEffect(() => {
-    if (selected == null) return;
+    // Hard-guard against NaN/null/out-of-range — backend rejects with 422
+    // and the components were crashing on the error response.
+    if (selected == null || !Number.isFinite(selected) || selected < 0) return;
+    const max = scan?.total_snapshots ?? 40000;
+    if (selected >= max) return;
+
+    let aborted = false;
+    const safeJson = (r) => (r.ok ? r.json() : Promise.resolve(null));
+
     fetch(`${API}/api/lob/snapshot/${selected}?ref_size=${refSize}`)
-      .then((r) => r.json())
-      .then(setSnapshot)
+      .then(safeJson)
+      .then((j) => { if (!aborted && j && !j.error) setSnapshot(j); })
       .catch(() => {});
     fetch(`${API}/api/lob/window/${selected}?ref_size=${refSize}&test_size=${testSize}`)
-      .then((r) => r.json())
-      .then(setWindowDetail)
+      .then(safeJson)
+      .then((j) => { if (!aborted && j && !j.error) setWindowDetail(j); })
       .catch(() => {});
-  }, [selected, refSize, testSize]);
+
+    return () => { aborted = true; };
+  }, [selected, refSize, testSize, scan?.total_snapshots]);
 
   return (
     <div style={{ maxWidth: 1600, margin: '0 auto' }}>

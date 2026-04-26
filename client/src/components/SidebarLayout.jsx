@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { Activity, FileText, BookOpen, Target, Sparkles } from 'lucide-react';
+import { Activity, FileText, BookOpen, Target, Waves, Radio } from 'lucide-react';
 
 export function SidebarLayout() {
   const sections = [
@@ -15,8 +15,9 @@ export function SidebarLayout() {
       title: 'LOB (10-level depth)',
       items: [
         { path: '/lob', label: 'Book Overview', icon: BookOpen },
+        { path: '/lob/orderflow', label: 'Order Flow', icon: Waves },
         { path: '/lob/forensic', label: 'Snapshot Forensic', icon: Target },
-        { path: '/lob/latent', label: 'Latent Trajectory', icon: Sparkles },
+        { path: '/lob/live', label: 'Live Stream', icon: Radio },
       ],
     },
   ];
