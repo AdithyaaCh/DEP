@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { LOBRegimeTimeline } from '../components/LOBRegimeTimeline';
 import { LOBAlarmPanel } from '../components/LOBAlarmPanel';
-import { LOBImbalanceHeatmap } from '../components/LOBImbalanceHeatmap';
 import { LOBDepthProfile } from '../components/LOBDepthProfile';
 import { LOBStats } from '../components/LOBStats';
 import { apiUrl } from '../lib/runtimeConfig';
@@ -96,12 +95,8 @@ export function LOBOverview() {
 
       <LOBRegimeTimeline scan={scan} selectedSnapshot={selected} onSnapshotSelect={setSelected} />
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '1.5rem' }}>
+      <div style={{ marginTop: '1.5rem' }}>
         <LOBAlarmPanel scan={scan} selectedSnapshot={selected} onSnapshotSelect={setSelected} />
-        <LOBImbalanceHeatmap
-          totalSnapshots={scan?.total_snapshots}
-          onSnapshotSelect={setSelected}
-        />
       </div>
 
       <div

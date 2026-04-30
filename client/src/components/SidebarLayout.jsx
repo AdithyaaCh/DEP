@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { Activity, FileText, BookOpen, Target, Waves, Radio } from 'lucide-react';
+import { Activity, FileText, BookOpen, Target, Radio } from 'lucide-react';
 import { backendLabel } from '../lib/runtimeConfig';
 
 export function SidebarLayout() {
@@ -9,15 +9,14 @@ export function SidebarLayout() {
       title: 'SP500 (390-min curves)',
       items: [
         { path: '/', label: 'Online Monitor', icon: Activity },
-        { path: '/forensic', label: 'Forensic Event View', icon: FileText },
+        { path: '/window', label: 'Window Comparator', icon: FileText },
       ],
     },
     {
       title: 'LOB (10-level depth)',
       items: [
         { path: '/lob', label: 'Book Overview', icon: BookOpen },
-        { path: '/lob/orderflow', label: 'Order Flow', icon: Waves },
-        { path: '/lob/forensic', label: 'Snapshot Forensic', icon: Target },
+        { path: '/lob/inspect', label: 'Snapshot Inspector', icon: Target },
         { path: '/lob/live', label: 'Live Stream', icon: Radio },
       ],
     },
@@ -38,10 +37,10 @@ export function SidebarLayout() {
       >
         <div>
           <h1 className="text-gradient" style={{ margin: 0, fontSize: '1.7rem', paddingLeft: '0.5rem' }}>
-            Spectra V7
+            FDA Regime Engine
           </h1>
           <p style={{ margin: '0.3rem 0 0 0.5rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-            FDA Regime Engine · SP500 + LOB
+            <sub>SP500 · LOB</sub>
           </p>
         </div>
 

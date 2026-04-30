@@ -5,7 +5,7 @@ import { LOBLabelAnalytics } from '../components/LOBLabelAnalytics';
 import { LOBStats } from '../components/LOBStats';
 import { apiUrl } from '../lib/runtimeConfig';
 
-export function LOBForensic() {
+export function SnapshotInspector() {
   const [endIdx, setEndIdx] = useState(2000);
   const [refSize, setRefSize] = useState(300);
   const [testSize, setTestSize] = useState(30);
@@ -56,7 +56,7 @@ export function LOBForensic() {
       >
         <div>
           <h1 className="text-gradient" style={{ margin: 0, fontSize: '2rem' }}>
-            LOB Snapshot Forensic
+            LOB Snapshot Inspector
           </h1>
           <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0 0 0', fontSize: '0.8rem' }}>
             Drill a single ref-vs-test window — inspect pre/post depth, label drift (KL), latent mean shift

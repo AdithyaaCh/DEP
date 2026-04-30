@@ -2,12 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShieldAlert, CheckCircle, Info, GitCompare } from 'lucide-react';
 import { apiUrl } from '../lib/runtimeConfig';
 
-/**
- * ForensicEventView — Pure HTML/CSS version.
- * Recharts was crashing on React 19 due to incompatible ref handling.
- * This version uses simple inline CSS bar charts instead.
- */
-export function ForensicEventView() {
+export function WindowComparator() {
   const [startDay, setStartDay] = useState(285);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -15,7 +10,7 @@ export function ForensicEventView() {
   const [refSize, setRefSize] = useState(50);
   const [testSize, setTestSize] = useState(5);
 
-  const fetchForensic = () => {
+  const fetchWindow = () => {
     setLoading(true);
     setError(null);
     fetch(apiUrl(`/api/regime/window/${startDay}?ref_size=${refSize}&test_size=${testSize}`))
@@ -28,13 +23,13 @@ export function ForensicEventView() {
         setLoading(false);
       })
       .catch(err => {
-        console.error("Forensic fetch failed:", err);
+        console.error("Window fetch failed:", err);
         setError(err.message);
         setLoading(false);
       });
   };
 
-  useEffect(() => { fetchForensic(); }, []);
+  useEffect(() => { fetchWindow(); }, []);
 
   const isShift = (data && typeof data.f_p_value === 'number') ? data.f_p_value < 0.01 : false;
 
@@ -61,7 +56,7 @@ export function ForensicEventView() {
     <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
       <header style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 className="text-gradient" style={{ margin: 0, fontSize: '2rem' }}>Forensic Window Comparator</h1>
+          <h1 className="text-gradient" style={{ margin: 0, fontSize: '2rem' }}>Window Comparator</h1>
           <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0 0 0', fontSize: '0.8rem' }}>
             Multi-Day Functional Population Analysis: Reference vs Test Window
           </p>
@@ -82,7 +77,7 @@ export function ForensicEventView() {
             <input type="number" className="input-style" style={{ width: '55px', padding: '0.3rem 0.4rem', fontSize: '0.85rem' }}
               value={testSize} onChange={(e) => setTestSize(parseInt(e.target.value) || 5)} min={2} max={20} />
           </div>
-          <button onClick={fetchForensic} disabled={loading}
+          <button onClick={fetchWindow} disabled={loading}
             style={{ height: 'max-content', alignSelf: 'flex-end', padding: '0.5rem 1rem', fontWeight: 'bold', fontSize: '0.8rem' }}>
             {loading ? '⏳ Analyzing...' : '🔬 Compare Windows'}
           </button>
@@ -98,7 +93,7 @@ export function ForensicEventView() {
       {error && !loading && (
         <div className="glass-panel" style={{ padding: '2rem', textAlign: 'center', color: 'var(--danger-color)' }}>
           <p>⚠ Failed to load data: {error}</p>
-          <button onClick={fetchForensic} style={{ marginTop: '1rem' }}>Retry</button>
+          <button onClick={fetchWindow} style={{ marginTop: '1rem' }}>Retry</button>
         </div>
       )}
 
@@ -182,7 +177,7 @@ export function ForensicEventView() {
             )}
           </div>
 
-          {/* Forensic Verdict Sidebar */}
+          {/* Verdict Sidebar */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             
             {/* Verdict Card */}
@@ -227,7 +222,7 @@ export function ForensicEventView() {
                    const url = URL.createObjectURL(blob);
                    const a = document.createElement('a');
                    a.href = url;
-                   a.download = `forensic_window_${startDay}.json`;
+                   a.download = `window_${startDay}.json`;
                    a.click();
                  }}
                >

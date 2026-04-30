@@ -2,10 +2,9 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { SidebarLayout } from './components/SidebarLayout';
 import { OnlineMonitor } from './pages/OnlineMonitor';
-import { ForensicEventView } from './pages/ForensicEventView';
+import { WindowComparator } from './pages/WindowComparator';
 import { LOBOverview } from './pages/LOBOverview';
-import { LOBForensic } from './pages/LOBForensic';
-import { LOBOrderFlow } from './pages/LOBOrderFlow';
+import { SnapshotInspector } from './pages/SnapshotInspector';
 import { LOBLiveStream } from './pages/LOBLiveStream';
 
 function App() {
@@ -13,10 +12,9 @@ function App() {
     <Routes>
       <Route path="/" element={<SidebarLayout />}>
         <Route index element={<OnlineMonitor />} />
-        <Route path="forensic" element={<ForensicEventView />} />
+        <Route path="window" element={<WindowComparator />} />
         <Route path="lob" element={<LOBOverview />} />
-        <Route path="lob/orderflow" element={<LOBOrderFlow />} />
-        <Route path="lob/forensic" element={<LOBForensic />} />
+        <Route path="lob/inspect" element={<SnapshotInspector />} />
         <Route path="lob/live" element={<LOBLiveStream />} />
       </Route>
     </Routes>
