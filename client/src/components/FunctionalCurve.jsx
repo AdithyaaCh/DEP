@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Layers } from 'lucide-react';
+import { apiUrl } from '../lib/runtimeConfig';
 
 /**
  * FunctionalCurve — Renders the raw intraday return curve overlaid
@@ -16,7 +17,7 @@ export function FunctionalCurve({ day }) {
     if (day == null) return;
     setLoading(true);
     setError(null);
-    fetch(`http://localhost:8000/api/curve/${day}`)
+    fetch(apiUrl(`/api/curve/${day}`))
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();

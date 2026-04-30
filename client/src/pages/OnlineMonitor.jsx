@@ -4,6 +4,7 @@ import { FDAStats } from '../components/FDAStats'
 import { HilbertManifold } from '../components/HilbertManifold'
 import { RegimeTimeline } from '../components/RegimeTimeline'
 import { FunctionalCurve } from '../components/FunctionalCurve'
+import { apiUrl } from '../lib/runtimeConfig'
 
 export function OnlineMonitor() {
   const [currentDay, setCurrentDay] = useState(302);
@@ -15,7 +16,7 @@ export function OnlineMonitor() {
   // Fetch window detail when standard Drill is clicked or Timeline window is selected
   const fetchWindowDetails = (startDay) => {
     setLoadingWindow(true);
-    fetch(`http://localhost:8000/api/regime/window/${startDay}`)
+    fetch(apiUrl(`/api/regime/window/${startDay}`))
       .then(res => res.json())
       .then(json => {
         setWindowDetail(json);

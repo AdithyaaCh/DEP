@@ -19,12 +19,28 @@ from app.simulator import MarketSimulator
 
 app = FastAPI(title="Spectra V7 Dashboard API (SP500 + LOB)")
 
+
+def _cors_settings():
+    raw_origins = os.getenv("FRONTEND_ORIGINS", "*").strip()
+    if raw_origins == "*":
+        return {
+            "allow_origins": ["*"],
+            "allow_credentials": False,
+            "allow_methods": ["*"],
+            "allow_headers": ["*"],
+        }
+
+    origins = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+    return {
+        "allow_origins": origins or ["*"],
+        "allow_credentials": bool(origins),
+        "allow_methods": ["*"],
+        "allow_headers": ["*"],
+    }
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    **_cors_settings(),
 )
 
 # Cache keyed by query parameters so different (ref_size, test_size, alpha)
@@ -910,4 +926,9 @@ async def lob_live_stream(websocket: WebSocket, start_idx: int = 300, speed: flo
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", "8000")),
+        reload=os.getenv("UVICORN_RELOAD", "true").lower() == "true",
+    )

@@ -3,8 +3,7 @@ import { LOBDepthProfile } from '../components/LOBDepthProfile';
 import { LOBSnapshotComparison } from '../components/LOBSnapshotComparison';
 import { LOBLabelAnalytics } from '../components/LOBLabelAnalytics';
 import { LOBStats } from '../components/LOBStats';
-
-const API = 'http://localhost:8000';
+import { apiUrl } from '../lib/runtimeConfig';
 
 export function LOBForensic() {
   const [endIdx, setEndIdx] = useState(2000);
@@ -18,15 +17,15 @@ export function LOBForensic() {
   const run = () => {
     setLoading(true);
     Promise.all([
-      fetch(`${API}/api/lob/window/${endIdx}?ref_size=${refSize}&test_size=${testSize}`).then((r) => r.json()),
+      fetch(apiUrl(`/api/lob/window/${endIdx}?ref_size=${refSize}&test_size=${testSize}`)).then((r) => r.json()),
     ]).then(([w]) => {
       setWindowDetail(w);
       if (w && w.ref_start != null) {
         const preMid = Math.floor((w.ref_start + w.ref_end) / 2);
         const postMid = Math.floor((w.test_start + w.test_end) / 2);
         Promise.all([
-          fetch(`${API}/api/lob/snapshot/${preMid}`).then((r) => r.json()),
-          fetch(`${API}/api/lob/snapshot/${postMid}`).then((r) => r.json()),
+          fetch(apiUrl(`/api/lob/snapshot/${preMid}`)).then((r) => r.json()),
+          fetch(apiUrl(`/api/lob/snapshot/${postMid}`)).then((r) => r.json()),
         ]).then(([a, b]) => {
           setPreSnap(a);
           setPostSnap(b);

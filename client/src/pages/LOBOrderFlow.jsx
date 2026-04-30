@@ -3,8 +3,7 @@ import { OrderFlowChart } from '../components/OrderFlowChart';
 import { OrderFlowSummary } from '../components/OrderFlowSummary';
 import { OrderFlowFPCA } from '../components/OrderFlowFPCA';
 import { Waves, RefreshCw } from 'lucide-react';
-
-const API = 'http://localhost:8000';
+import { apiUrl } from '../lib/runtimeConfig';
 
 /**
  * Order-flow analytics dashboard.
@@ -32,7 +31,7 @@ export function LOBOrderFlow() {
   useEffect(() => {
     let aborted = false;
     setLoadingSeries(true);
-    fetch(`${API}/api/lob/orderflow?stride=${stride}&smooth_sigma=${smoothSigma}&flow_window=${flowWindow}`)
+    fetch(apiUrl(`/api/lob/orderflow?stride=${stride}&smooth_sigma=${smoothSigma}&flow_window=${flowWindow}`))
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
         if (!aborted && j && !j.error) setSeries(j);
@@ -46,7 +45,7 @@ export function LOBOrderFlow() {
   useEffect(() => {
     let aborted = false;
     setLoadingFpca(true);
-    fetch(`${API}/api/lob/orderflow/fpca?window_size=${fpcaWin}&stride=${fpcaStride}&n_components=3&smooth_sigma=${smoothSigma}&flow_window=${flowWindow}`)
+    fetch(apiUrl(`/api/lob/orderflow/fpca?window_size=${fpcaWin}&stride=${fpcaStride}&n_components=3&smooth_sigma=${smoothSigma}&flow_window=${flowWindow}`))
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
         if (!aborted && j && !j.error) setFpca(j);
@@ -60,7 +59,7 @@ export function LOBOrderFlow() {
   useEffect(() => {
     if (!Number.isFinite(center) || center < 0) return;
     let aborted = false;
-    fetch(`${API}/api/lob/orderflow/window?center=${center}&halfwindow=${halfwindow}&smooth_sigma=${smoothSigma}&flow_window=${flowWindow}`)
+    fetch(apiUrl(`/api/lob/orderflow/window?center=${center}&halfwindow=${halfwindow}&smooth_sigma=${smoothSigma}&flow_window=${flowWindow}`))
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => { if (!aborted && j && !j.error) setWindowDetail(j); })
       .catch(() => {});

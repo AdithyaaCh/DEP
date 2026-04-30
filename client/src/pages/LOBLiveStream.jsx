@@ -4,8 +4,7 @@ import { LiveDepthBook } from '../components/LiveDepthBook';
 import { LiveAlarmGauge } from '../components/LiveAlarmGauge';
 import { LiveTickerSparkline } from '../components/LiveTickerSparkline';
 import { LiveAlertLog } from '../components/LiveAlertLog';
-
-const WS = 'ws://localhost:8000';
+import { wsUrl } from '../lib/runtimeConfig';
 const HISTORY = 240;  // keep last 240 ticks for sparklines
 
 /**
@@ -41,7 +40,7 @@ export function LOBLiveStream() {
   const connect = useCallback(() => {
     setError(null);
     setStatusText('connecting…');
-    const url = `${WS}/ws/lob/stream?start_idx=${startIdx}&speed=${speed}&ref_size=${refSize}`;
+    const url = wsUrl(`/ws/lob/stream?start_idx=${startIdx}&speed=${speed}&ref_size=${refSize}`);
     const ws = new WebSocket(url);
     wsRef.current = ws;
 
@@ -55,7 +54,7 @@ export function LOBLiveStream() {
       finalizeAlert();
     };
     ws.onerror = () => {
-      setError('WebSocket error — is the backend running on port 8000?');
+      setError('WebSocket error — check that the backend URL is reachable and WebSockets are enabled.');
       setStatusText('error');
       setRunning(false);
     };

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { apiUrl } from '../lib/runtimeConfig';
 
 /**
  * Time × level heatmap of level-wise imbalance (channel 4). x axis is
@@ -13,7 +14,7 @@ export function LOBImbalanceHeatmap({ totalSnapshots, onSnapshotSelect }) {
     if (!totalSnapshots) return;
     setLoading(true);
     const stride = Math.max(1, Math.floor(totalSnapshots / 900));
-    fetch(`http://localhost:8000/api/lob/imbalance_grid?stride=${stride}`)
+    fetch(apiUrl(`/api/lob/imbalance_grid?stride=${stride}`))
       .then((r) => r.json())
       .then((j) => {
         setGrid(j);

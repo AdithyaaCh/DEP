@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceArea } from 'recharts';
+import { apiUrl } from '../lib/runtimeConfig';
 
 export function RegimeTimeline({ onWindowSelect, selectedWindow }) {
   const [data, setData] = useState(null);
@@ -7,7 +8,7 @@ export function RegimeTimeline({ onWindowSelect, selectedWindow }) {
   const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/regime/scan')
+    fetch(apiUrl('/api/regime/scan'))
       .then(res => res.json())
       .then(json => {
         setData(json);

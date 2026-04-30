@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { Activity, FileText, BookOpen, Target, Waves, Radio } from 'lucide-react';
+import { backendLabel } from '../lib/runtimeConfig';
 
 export function SidebarLayout() {
   const sections = [
@@ -97,7 +98,7 @@ export function SidebarLayout() {
           }}
         >
           <div style={{ fontWeight: 600, marginBottom: '0.25rem', color: '#94a3b8' }}>Backend</div>
-          <div>localhost:8000</div>
+          <div>{backendLabel()}</div>
           <div style={{ marginTop: '0.25rem', fontSize: '0.65rem' }}>
             SP500 · 5-channel LOB · fPCA · Hotelling T²
           </div>

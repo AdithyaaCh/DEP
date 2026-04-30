@@ -4,8 +4,7 @@ import { LOBAlarmPanel } from '../components/LOBAlarmPanel';
 import { LOBImbalanceHeatmap } from '../components/LOBImbalanceHeatmap';
 import { LOBDepthProfile } from '../components/LOBDepthProfile';
 import { LOBStats } from '../components/LOBStats';
-
-const API = 'http://localhost:8000';
+import { apiUrl } from '../lib/runtimeConfig';
 
 export function LOBOverview() {
   const [scan, setScan] = useState(null);
@@ -21,7 +20,7 @@ export function LOBOverview() {
   useEffect(() => {
     setLoadingScan(true);
     setScan(null);
-    fetch(`${API}/api/lob/scan?ref_size=${refSize}&test_size=${testSize}&alpha=0.01&min_consecutive=${minConsec}&min_mahalanobis=${minMaha}`)
+    fetch(apiUrl(`/api/lob/scan?ref_size=${refSize}&test_size=${testSize}&alpha=0.01&min_consecutive=${minConsec}&min_mahalanobis=${minMaha}`))
       .then((r) => r.json())
       .then((j) => {
         setScan(j);
@@ -43,11 +42,11 @@ export function LOBOverview() {
     let aborted = false;
     const safeJson = (r) => (r.ok ? r.json() : Promise.resolve(null));
 
-    fetch(`${API}/api/lob/snapshot/${selected}?ref_size=${refSize}`)
+    fetch(apiUrl(`/api/lob/snapshot/${selected}?ref_size=${refSize}`))
       .then(safeJson)
       .then((j) => { if (!aborted && j && !j.error) setSnapshot(j); })
       .catch(() => {});
-    fetch(`${API}/api/lob/window/${selected}?ref_size=${refSize}&test_size=${testSize}`)
+    fetch(apiUrl(`/api/lob/window/${selected}?ref_size=${refSize}&test_size=${testSize}`))
       .then(safeJson)
       .then((j) => { if (!aborted && j && !j.error) setWindowDetail(j); })
       .catch(() => {});

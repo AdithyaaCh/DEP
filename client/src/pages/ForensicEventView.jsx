@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldAlert, CheckCircle, Info, GitCompare } from 'lucide-react';
+import { apiUrl } from '../lib/runtimeConfig';
 
 /**
  * ForensicEventView — Pure HTML/CSS version.
@@ -17,7 +18,7 @@ export function ForensicEventView() {
   const fetchForensic = () => {
     setLoading(true);
     setError(null);
-    fetch(`http://localhost:8000/api/regime/window/${startDay}?ref_size=${refSize}&test_size=${testSize}`)
+    fetch(apiUrl(`/api/regime/window/${startDay}?ref_size=${refSize}&test_size=${testSize}`))
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
